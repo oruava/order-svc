@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package orders;
+
+option go_package = "github.com/oruava/order-svc/pb";
+
+import "google/protobuf/timestamp.proto";
+
+// ─ Entidades ─────────────────────────────────────────────
+
+// OrderItem: linea de un pedido (tabla order_items)
+message OrderItem {
+  string product_id = 1;
+  int32 quantity = 2;
+  double unit_price = 3;
+  double subtotal = 4;
+}
+
+// ItemInput: producto + cantidad al momento de crear el pedido
+message ItemInput {
+  string product_id = 1;
+  int32 quantity = 2;
+}
+
+// Order: entidad principal (tabla orders)
+message Order {
+  string order_id = 1;
+  string client_id = 2;
+  string restaurant_id = 3;
+  string delivery_id = 4;  // opcional: se llena al asignar repartidor
+  // status: CREATED | PAYMENT_PENDING | PAID | IN_PREPARATION |
+  //         READY_FOR_PICKUP | ON_THE_WAY | DELIVERED | CANCELLED
+  string status = 5;
+  string delivery_address = 6;
+  double total_amount = 7;
+  repeated OrderItem items = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+// ─ Mensajes de request/response ──────────────────────────
+
+message CreateOrderRequest {
+  string client_id = 1;
+  string restaurant_id = 2;
+  string delivery_address = 3;
+  repeated ItemInput items = 4;
+}
+message CreateOrderResponse {
+  Order order = 1;
+}
+
+message GetOrderRequest {
+  string order_id = 1;
+}
+message GetOrderResponse {
+  Order order = 1;
+}
+
+message UpdateOrderStatusRequest {
+  string order_id = 1;
+  string status = 2;
+}
+message UpdateOrderStatusResponse {
+  string order_id = 1;
+  string previous_status = 2;
+  string new_status = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}
+
+// ─ Servicio ──────────────────────────────────────────────
+
+service OrderService {
+  rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
+  rpc GetOrder (GetOrderRequest) returns (GetOrderResponse);
+  rpc UpdateOrderStatus (UpdateOrderStatusRequest) returns (UpdateOrderStatusResponse);
+}
